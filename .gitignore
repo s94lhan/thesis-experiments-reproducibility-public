@@ -1,0 +1,25 @@
+# R/RStudio session files
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+
+# Reproducibility libraries are restored locally, not committed
+renv/library/
+renv/staging/
+renv/local/
+
+# Large generated experiment artifacts
+**/runs/
+**/cache/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+~$*
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+Desktop.ini
