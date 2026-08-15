@@ -1,29 +1,3 @@
-# Figure 1-style approximation for Scenario 1 using the author's R calibrator.
-#
-# Run from the causalCalibration RStudio project:
-#   source("reproduce_figure1_full.R")
-#
-# This script is NOT the original paper script. It uses:
-#   - the Scenario 1 data-generating mechanism from Appendix D.1 of the paper
-#   - seven DR-learner final regressors: GAM, RF, MARS, GLMnet, GBRT 2/5/8
-#   - Super Learner-style nuisance estimation using the Table 1 libraries
-#   - the package functions causalCalibrate() and cross_calibrate()
-#   - log-scale 2 x 2 panels matching the paper layout
-#
-# It differs from the published Figure 1 because the public master branch does
-# not include the final ICML simulation script. The nuisance fits below mirror
-# the paper's Table 1 libraries, but they are implemented directly rather than
-# through the exact sl3 objects used by the authors. The CAL metric follows
-# Appendix D.3: fit a GBRT estimate of gamma_0 on an independent sample of
-# 100000 observations and evaluate the cross-product estimator on a validation
-# sample.
-# The calibration step itself follows Algorithm 3: out-of-fold tau predictions
-# and out-of-fold nuisance estimates are pooled into causalCalibrate(), and new
-# fold-specific predictions are collapsed with cross_calibrate().
-#
-# The default `repeats` is intentionally small so the script finishes on a
-# laptop. Increase it for smoother Monte Carlo curves.
-
 required_packages <- c(
   "data.table",
   "ggplot2",
@@ -55,24 +29,6 @@ suppressPackageStartupMessages({
 if (!exists("causalCalibrate")) source("R/causalCalibration.R")
 if (!exists("cross_calibrate")) source("R/cross_calibrate.R")
 
-sample_sizes <- c(1000, 2000, 5000, 10000)
-repeats <- 5
-folds <- 10
-test_n <- 10000
-gamma_n <- 100000
-scale_n <- 100000
-learners <- c("GAM", "RF", "MARS", "GLMnet", "GBRT 2", "GBRT 5", "GBRT 8")
-
-learner_colors <- c(
-  "GAM" = "#999999",
-  "RF" = "#E69F00",
-  "MARS" = "#0072B2",
-  "GLMnet" = "#009E73",
-  "GBRT 2" = "#F0E442",
-  "GBRT 5" = "#56B4E9",
-  "GBRT 8" = "#D55E00"
-)
-
 scenario1 <- function(n, seed, draw_outcome = TRUE) {
   set.seed(seed)
   W <- data.frame(
@@ -82,8 +38,7 @@ scenario1 <- function(n, seed, draw_outcome = TRUE) {
     W4 = runif(n, -1, 1)
   )
   Qbar <- function(a, w) {
-    # Appendix D.1 of the published paper uses +1.5 as the intercept.
-    # The public repository's draft sims.Rmd currently has -1.5 here.
+
     plogis(
       1.5 + 1.5 * a +
         2 * a * abs(w$W1) * abs(w$W2) -
@@ -507,93 +462,4 @@ mse <- function(pred, truth, var_scale) {
   max(mean((as.numeric(pred) - as.numeric(truth))^2) / var_scale, 1e-12)
 }
 
-run_one <- function(n, learner, repeat_id, var_scale) {
-  seed <- 2026 + 100000 * repeat_id + n
-  dat <- scenario1(n, seed = seed)
-  folds_list <- make_folds(n, folds, seed = seed + 11)
-  dr_fit <- fit_crossfit_algorithm3(dat, learner, folds_list)
-
-  calibrator <- causalCalibrate(
-    tau = dr_fit$tau_oof,
-    A = dat$A,
-    Y = dat$Y,
-    EY1 = dr_fit$q1_oof,
-    EY0 = dr_fit$q0_oof,
-    pA1 = dr_fit$g_oof
-  )
-
-  test <- scenario1(test_n, seed = seed + 37)
-  gamma_sample <- scenario1(gamma_n, seed = seed + 61, draw_outcome = FALSE)
-  tau_mat <- predict_fold_matrix(dr_fit, learner, test$W)
-  tau_mat_gamma <- predict_fold_matrix(dr_fit, learner, gamma_sample$W)
-  raw <- collapse_fold_predictions(tau_mat)
-  raw_gamma <- collapse_fold_predictions(tau_mat_gamma)
-  calibrated <- cross_calibrate(calibrator, tau_mat)
-  calibrated_gamma <- cross_calibrate(calibrator, tau_mat_gamma)
-
-  raw_gamma_model <- fit_gamma_model(raw_gamma, gamma_sample$tau, seed = seed + 71)
-  calibrated_gamma_model <- fit_gamma_model(calibrated_gamma, gamma_sample$tau, seed = seed + 81)
-  raw_gamma_hat <- predict(raw_gamma_model, newdata = data.frame(pred = raw), n.trees = raw_gamma_model$n.trees)
-  calibrated_gamma_hat <- predict(
-    calibrated_gamma_model,
-    newdata = data.frame(pred = calibrated),
-    n.trees = calibrated_gamma_model$n.trees
-  )
-
-  data.table(
-    sample_size = n,
-    learner = learner,
-    repeat_id = repeat_id,
-    estimator = rep(c("Causal Isotonic Calibrator", "DR Learner"), each = 2),
-    metric = rep(c("CAL", "MSE"), times = 2),
-    value = c(
-      calibration_error(calibrated, test$tau, calibrated_gamma_hat, var_scale),
-      mse(calibrated, test$tau, var_scale),
-      calibration_error(raw, test$tau, raw_gamma_hat, var_scale),
-      mse(raw, test$tau, var_scale)
-    )
-  )
-}
-
-scale_dat <- scenario1(scale_n, seed = 44, draw_outcome = FALSE)
-var_scale <- var(scale_dat$Y1 - scale_dat$Y0)
-message("Standardization Var(Y(1)-Y(0)) = ", signif(var_scale, 6))
-
-results <- rbindlist(lapply(sample_sizes, function(n) {
-  rbindlist(lapply(learners, function(learner) {
-    rbindlist(lapply(seq_len(repeats), function(r) {
-      message("Scenario 1, n=", n, ", learner=", learner, ", repeat=", r, "/", repeats)
-      run_one(n, learner, r, var_scale)
-    }))
-  }))
-}))
-
-summary_results <- results[, .(value = mean(value)), by = .(sample_size, learner, estimator, metric)]
-summary_results[, estimator := factor(estimator, levels = c("Causal Isotonic Calibrator", "DR Learner"))]
-summary_results[, metric := factor(metric, levels = c("CAL", "MSE"))]
-summary_results[, learner := factor(learner, levels = learners)]
-
-dir.create("figures", showWarnings = FALSE)
-fwrite(results, "figures/reproduce_figure1_full_raw_results.csv")
-fwrite(summary_results, "figures/reproduce_figure1_full_summary.csv")
-
-p <- ggplot(summary_results, aes(x = sample_size, y = value, color = learner, group = learner)) +
-  geom_line(linewidth = 0.45) +
-  geom_point(size = 0.9) +
-  facet_grid(metric ~ estimator, scales = "free_y") +
-  scale_x_log10(breaks = sample_sizes) +
-  scale_y_log10() +
-  scale_color_manual(values = learner_colors) +
-  labs(title = "Scenario 1", x = "sample size", y = NULL, color = NULL) +
-  theme_bw(base_size = 10) +
-  theme(
-    plot.title = element_text(face = "bold"),
-    strip.background = element_rect(fill = "grey80", color = "grey60"),
-    strip.text = element_text(size = 8),
-    legend.position = "bottom",
-    legend.key.width = unit(0.7, "cm"),
-    panel.grid.minor = element_blank()
-  )
-
-ggsave("figures/reproduce_figure1_full.png", p, width = 7.3, height = 5.4, dpi = 240)
-print(p)
+support_definitions_end <- TRUE

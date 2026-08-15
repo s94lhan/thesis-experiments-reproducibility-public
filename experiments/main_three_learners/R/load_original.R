@@ -14,9 +14,9 @@ load_original_reproduction <- function(project_dir = resolve_paper_project()) {
   setwd(project_dir)
 
   lines <- readLines("reproduce_figure1_full.R", warn = FALSE)
-  stop_line <- grep("^scale_dat <-", lines)[1]
+  stop_line <- grep("^support_definitions_end <-", lines)[1]
   if (is.na(stop_line)) {
-    stop("Could not find the main-run boundary in reproduce_figure1_full.R")
+    stop("Could not find the support-code boundary in reproduce_figure1_full.R")
   }
 
   eval(parse(text = paste(lines[seq_len(stop_line - 1)], collapse = "\n")), envir = .GlobalEnv)

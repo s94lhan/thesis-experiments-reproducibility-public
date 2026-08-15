@@ -1,6 +1,3 @@
-# Run this file in RStudio from the project root.
-# The formal run uses n = 5000 and R = 300 Monte Carlo repeats.
-
 project_root <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
 
 source(file.path(project_root, "R", "01_dgp.R"), encoding = "UTF-8")

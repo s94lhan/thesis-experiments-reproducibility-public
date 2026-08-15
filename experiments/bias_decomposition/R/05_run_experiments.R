@@ -9,7 +9,7 @@ bias_decomposition_options <- function(
   n = 5000,
   reps = 300,
   seed_base = 20260616L,
-  run_id = "bias_decomposition_n5000_reps300_no_bump",
+  run_id = "bias_decomposition_n5000_reps300_final_v1",
   project_root = getwd(),
   sorting_sigmas = c(0, 0.02, 0.05, 0.08, 0.12),
   additive_grid = c(-0.50, -0.25, -0.10, 0, 0.10, 0.25, 0.50),

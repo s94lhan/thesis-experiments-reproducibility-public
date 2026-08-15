@@ -11,8 +11,6 @@ construct_sorting_score <- function(tau, sigma, seed = NULL) {
     set.seed(seed)
   }
 
-  # Fixed raw-score marginal distribution: only the assignment of score values
-  # to individuals changes as ranking noise increases.
   fixed_scores <- sort(tau)
   noisy_rank <- rank(tau + stats::rnorm(length(tau), mean = 0, sd = sigma), ties.method = "first")
   fixed_scores[noisy_rank]

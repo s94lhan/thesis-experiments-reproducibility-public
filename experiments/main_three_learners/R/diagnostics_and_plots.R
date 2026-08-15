@@ -416,7 +416,7 @@ plot_score_error_spearman_delta_v <- function(metrics_raw, threshold_dt, eval_dt
       drop = FALSE
     ) +
     ggplot2::labs(
-      title = "Figure 4-1. CATE Score-Level Performance and Policy Value Changes Before and After Calibration",
+      title = "Figure 1. CATE Score-Level Performance and Policy Value Changes Before and After Calibration",
       subtitle = "Lines show Monte Carlo means over 300 replications; Delta V is V(iso) - V(raw).",
       x = "sample size",
       y = "metric value",
@@ -487,7 +487,7 @@ plot_raw_score_quintile_boxplots <- function(eval_dt, output_path, preferred_n =
     ggplot2::coord_cartesian(ylim = c(-1.0, 0.35)) +
     ggplot2::scale_fill_manual(values = iso_score_colors[c("True CATE", "Raw score", "Calibrated score")]) +
     ggplot2::labs(
-      title = "Figure 4-2. True CATE, Raw Score, and Calibrated Score by Raw-Score Quintiles",
+      title = "Figure 2. True CATE, Raw Score, and Calibrated Score by Raw-Score Quintiles",
       subtitle = paste0(
         "n = ", selected_n,
         "; within each Monte Carlo replication, evaluation samples are split into five equal-size raw-score groups; boxplots pool 300 replications."
@@ -644,7 +644,7 @@ plot_threshold_treatment_two_panel <- function(threshold_dt, policy_dt, output_p
     heights = grid::unit(c(24, 1), c("pt", "null"))
   )))
   grid::grid.draw(grid::textGrob(
-    "Figure 4-3. Effective Raw-Score Threshold and Treatment Rate Before and After Calibration",
+    "Figure 3. Effective Raw-Score Threshold and Treatment Rate Before and After Calibration",
     gp = grid::gpar(
       fontfamily = "Times New Roman",
       fontface = "bold",
@@ -724,7 +724,7 @@ plot_raw_score_flip_value_publication <- function(
     ggplot2::scale_colour_manual(values = iso_contribution_colors) +
     ggplot2::labs(
       title = paste0(
-        "Figure 4-4. Policy-value contributions of beneficial and harmful flips, n = ",
+        "Figure 4. Policy-value contributions of beneficial and harmful flips, n = ",
         selected_n
       ),
       x = "raw CATE score",

@@ -5,9 +5,9 @@
 .Rproj.user/
 
 # Reproducibility libraries are restored locally, not committed
-renv/library/
-renv/staging/
-renv/local/
+**/renv/library/
+**/renv/staging/
+**/renv/local/
 
 # Large generated experiment artifacts
 **/runs/

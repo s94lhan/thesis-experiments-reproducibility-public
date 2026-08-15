@@ -14,12 +14,11 @@ bias_root <- file.path(repo_root, "experiments", "bias_decomposition")
 required <- c(
   file.path(repo_root, "README.md"),
   file.path(repo_root, ".gitignore"),
-  file.path(repo_root, "FILE_MANIFEST.csv"),
-  file.path(repo_root, "docs", "EXPERIMENT_ALIGNMENT.md"),
-  file.path(repo_root, "docs", "GITHUB_UPLOAD_GUIDE.md"),
-  file.path(repo_root, "scripts", "start_rstudio_on_project_drive.ps1"),
+  file.path(repo_root, "THIRD_PARTY_NOTICE.md"),
+  file.path(main_root, "ThreeLearnersIsoCrossCalibration.Rproj"),
   file.path(main_root, "RUN_IN_RSTUDIO.R"),
   file.path(main_root, "renv.lock"),
+  file.path(bias_root, "BiasDecompositionExperiment.Rproj"),
   file.path(bias_root, "RUN_IN_RSTUDIO.R"),
   file.path(bias_root, "renv.lock")
 )
@@ -28,31 +27,24 @@ if (length(missing) > 0L) {
   stop("Missing required repository files:\n", paste(missing, collapse = "\n"))
 }
 
-manifest <- read.csv(
-  file.path(repo_root, "FILE_MANIFEST.csv"),
-  stringsAsFactors = FALSE,
-  check.names = FALSE,
-  fileEncoding = "UTF-8-BOM"
-)
-stopifnot(identical(names(manifest), c("path", "bytes", "sha256")))
-manifest_files <- file.path(repo_root, manifest$path)
-missing_manifest_files <- manifest$path[!file.exists(manifest_files)]
-if (length(missing_manifest_files) > 0L) {
-  stop("Manifest entries are missing:\n", paste(missing_manifest_files, collapse = "\n"))
-}
-actual_bytes <- as.numeric(file.info(manifest_files)$size)
-if (!identical(actual_bytes, as.numeric(manifest$bytes))) {
-  stop("One or more manifest file sizes do not match.")
-}
-
 r_files <- list.files(
   file.path(repo_root, "experiments"),
   pattern = "[.]R$",
   recursive = TRUE,
   full.names = TRUE
 )
-for (file in r_files) {
-  parse(file = file)
+r_file_paths <- gsub("\\\\", "/", r_files)
+r_files <- r_files[!grepl("/(renv/library|runs|cache)/", r_file_paths)]
+comment_hits <- character()
+for (file in c(r_files, get_script_path())) {
+  parsed <- parse(file = file, keep.source = TRUE)
+  parse_data <- getParseData(parsed, includeText = TRUE)
+  if (any(parse_data$token == "COMMENT")) {
+    comment_hits <- c(comment_hits, file)
+  }
+}
+if (length(comment_hits) > 0L) {
+  stop("Code comments remain in:\n", paste(comment_hits, collapse = "\n"))
 }
 
 old_wd <- getwd()
@@ -73,6 +65,7 @@ stopifnot(
   identical(as.integer(bias_opts$reps), 300L),
   identical(as.integer(bias_opts$n), 5000L)
 )
+
 bias_runner <- readLines(
   file.path(bias_root, "RUN_IN_RSTUDIO.R"),
   warn = FALSE,
@@ -93,13 +86,16 @@ reference_pngs <- list.files(
 stopifnot(length(reference_pngs) == 9L)
 stopifnot(all(file.info(reference_pngs)$size > 0))
 
-code_and_docs <- list.files(
+portable_files <- list.files(
   repo_root,
   pattern = "[.](R|md|txt)$",
   recursive = TRUE,
   full.names = TRUE
 )
-portable_files <- setdiff(code_and_docs, file.path(repo_root, "docs", "GITHUB_UPLOAD_GUIDE.md"))
+portable_paths <- gsub("\\\\", "/", portable_files)
+portable_files <- portable_files[
+  !grepl("/(renv/library|runs|cache)/", portable_paths)
+]
 absolute_path_hits <- unlist(lapply(portable_files, function(path) {
   lines <- readLines(path, warn = FALSE, encoding = "UTF-8")
   drive_path_pattern <- "(^|[\\\"' (])[A-Za-z]:[/\\\\]"
@@ -112,7 +108,9 @@ if (length(absolute_path_hits) > 0L) {
 cat(
   "Repository checks passed.\n",
   "Parsed R files: ", length(r_files), "\n",
+  "Formal Monte Carlo replications: 300 per experiment\n",
   "Reference figures: ", length(reference_pngs), "\n",
+  "Code comments: 0\n",
   "No simulation was run.\n",
   sep = ""
 )

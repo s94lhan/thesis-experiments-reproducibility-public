@@ -1,5 +1,3 @@
-# Open ThreeLearnersIsoCrossCalibration.Rproj first, then source this file.
-
 project_root <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
 if (!file.exists(file.path(project_root, "scripts", "run_pipeline.R"))) {
   stop("Open ThreeLearnersIsoCrossCalibration.Rproj before sourcing RUN_IN_RSTUDIO.R.")
@@ -135,11 +133,10 @@ load_saved_plot_table <- function(table, run_id = "three_learners_iso_reps300_re
 
 cat(
   "Ready.\n",
-  "1. train_learners()                    # train GLMnet, GBRT 8, RF once\n",
-  "2. calibrate_from_cache()              # Causal Isotonic + CAL + diagnostics\n",
-  "   calibrate_from_cache(skip_cal=TRUE) # faster run without CAL\n",
-  "3. plot_from_results()                 # read result CSV files only\n",
-  "4. show_run_status()                   # inspect checkpoint counts\n",
-  "5. check_formal_settings()             # verify the thesis configuration\n",
+  "1. train_learners()\n",
+  "2. calibrate_from_cache()\n",
+  "3. plot_from_results()\n",
+  "4. show_run_status()\n",
+  "5. check_formal_settings()\n",
   "Or run_full_experiment() to execute the three stages in order.\n"
 )

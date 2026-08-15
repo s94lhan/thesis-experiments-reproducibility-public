@@ -351,7 +351,7 @@ make_sorting_policy_composition_plot <- function(detail) {
       )
     ) +
     labs(
-      title = "Figure 4-5. Ranking-error experiment: policy value and treated-set quality",
+      title = "Figure 5. Ranking-error experiment: policy value and treated-set quality",
       x = "ranking-noise strength sigma",
       y = NULL,
       colour = NULL,
@@ -738,9 +738,9 @@ make_sorting_additive_crosscheck_four_panel <- function(dt, a_value) {
     ifelse(a_value > 0, "over-treatment case", "under-treatment case")
   )
   figure_title <- if (a_value < 0) {
-    "Figure 4-8. Sorting-Error Cross-Check under Negative Additive Bias (a = -0.10)"
+    "Figure 8. Sorting-Error Cross-Check under Negative Additive Bias (a = -0.10)"
   } else {
-    "Figure 4-9. Sorting-Error Cross-Check under Positive Additive Bias (a = 0.10)"
+    "Figure 9. Sorting-Error Cross-Check under Positive Additive Bias (a = 0.10)"
   }
 
   ggplot() +
@@ -870,7 +870,7 @@ make_bias_decomposition_plots <- function(opts) {
 
   save_plot(
     make_distribution_plot(collect_additive_distribution(opts),
-                           "Figure 4-6. Score Distribution Correction under Additive Bias",
+                           "Figure 6. Score Distribution Correction under Additive Bias",
                            "score value"),
     file.path(plots_dir, "additive_bias_score_distributions_with_flip_region.png"),
     width = 10.8, height = 4.45
@@ -884,7 +884,7 @@ make_bias_decomposition_plots <- function(opts) {
   slope <- read_result(opts, "slope_bias_detail.csv")
   save_plot(
     make_slope_error_policy_plot(slope, "b", "Scale distortion parameter b",
-                                 "Figure 4-7. Scale bias experiment: error reductions and policy value"),
+                                 "Figure 7. Scale bias experiment: error reductions and policy value"),
     file.path(plots_dir, "slope_bias_error_reduction_vs_policy_gain.png"),
     width = 10.2, height = 4.6
   )

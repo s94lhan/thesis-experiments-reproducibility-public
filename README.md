@@ -1,84 +1,69 @@
-# Reproducible Thesis Simulation Experiments
+# Thesis Simulation Experiments
 
-This repository contains two R simulation studies from a graduate thesis. It is organized so that reviewers and collaborators can reproduce the reported results and Figures 4-1 through 4-9 from the released code.
+This repository contains the reproducibility materials for two simulation studies in the thesis *The Impact of Causal Isotonic Cross-Calibration on Fixed-Threshold Treatment Decisions*.
 
-## Repository layout
+Both formal experiments use 300 Monte Carlo replications. The statistical design, estimators, calibration procedures, and evaluation metrics are unchanged from the thesis analyses.
 
-```text
-experiments/
-├── main_three_learners/   # GLMnet, GBRT 8, RF, and causal isotonic cross-calibration
-└── bias_decomposition/    # Ranking error, additive bias, scale bias, and interactions
-docs/
-├── EXPERIMENT_ALIGNMENT.md
-└── GITHUB_UPLOAD_GUIDE.md
-scripts/
-├── check_repository.R
-└── start_rstudio_on_project_drive.ps1
-FILE_MANIFEST.csv           # File sizes and SHA-256 checksums
-```
+## Experiments
 
-Both formal studies use 300 Monte Carlo replications. See [Experiment alignment](docs/EXPERIMENT_ALIGNMENT.md) for the exact settings and the mapping between code outputs and thesis figures.
+| Directory | Study | Thesis figures |
+| --- | --- | --- |
+| `experiments/main_three_learners/` | GLMnet, gradient-boosted regression trees, random forests, and pooled causal isotonic cross-calibration | Figures 1-4 |
+| `experiments/bias_decomposition/` | Ranking error, additive bias, scale distortion, and their interaction | Figures 5-9 |
 
-## Quick start
+Each experiment contains its own RStudio project, package lockfile, formal run script, source code, README, and compact reference outputs.
 
-1. Install R 4.6.0, or a compatible version, and RStudio.
-2. Enter the directory for the experiment you want to reproduce.
-3. Install `renv` and restore the locked package environment:
+## Requirements
+
+- R 4.6.0, or a compatible version
+- RStudio is optional but recommended
+- The R packages recorded in each experiment's `renv.lock`
+
+Open the selected experiment directory and restore its package environment:
 
 ```r
 install.packages("renv")
-renv::restore()
+renv::restore(project = getwd())
 ```
 
-4. Open the experiment's `.Rproj` file and follow its README.
+## Run the formal experiments
 
-### Keep runtime files off the system drive
+Main three-learner experiment:
 
-On Windows, the launcher below stores R temporary files and the `renv` cache under `Codex work\R-runtime` on the same drive as this repository. It then opens the selected RStudio project without changing any experiment setting.
-
-Run one command at a time from the repository root:
-
-```powershell
-.\scripts\start_rstudio_on_project_drive.ps1 -Experiment main
-.\scripts\start_rstudio_on_project_drive.ps1 -Experiment bias
+```r
+source("RUN_IN_RSTUDIO.R", encoding = "UTF-8")
+check_formal_settings()
+run_full_experiment()
 ```
 
-Formal results are still written to the experiment's project-local `runs/` directory.
+Bias-decomposition experiment:
 
-## Formal entry points
-
-```text
-experiments/main_three_learners/RUN_IN_RSTUDIO.R
-experiments/bias_decomposition/RUN_IN_RSTUDIO.R
+```r
+source("RUN_IN_RSTUDIO.R", encoding = "UTF-8")
+show_formal_run_settings()
+run_formal_bias_decomposition_experiment(project_root = getwd())
 ```
 
-## Preflight check
+Formal output is written to each experiment's Git-ignored `runs/` directory. The full simulations are computationally intensive; interrupted main-experiment stages can be restarted and matching completed caches are reused.
 
-Run this command from the repository root:
+## Reference outputs
+
+The tracked `reference_outputs/` directories contain compact result tables and the nine thesis figures from the formal 300-replication runs. They can be used to compare a new run with the reported results and are not inputs to a new simulation.
+
+Each experiment README also explains how to redraw figures from completed results without rerunning the Monte Carlo simulation.
+
+## Repository check
+
+From the repository root, run:
 
 ```powershell
 Rscript scripts/check_repository.R
 ```
 
-The check parses all R source files, verifies the formal settings and reference outputs, and checks the manifest file sizes. It does not run a simulation.
+This parses the R source files, verifies the two formal configurations, and checks that all nine reference figures are present. It does not run either simulation.
 
-`FILE_MANIFEST.csv` records each released file's size and SHA-256 checksum. The manifest does not include itself.
+## Reproducibility notes
 
-## Computation and outputs
+Package versions are fixed by the two `renv.lock` files. Small numerical differences may arise across operating systems, BLAS implementations, parallel schedules, or package builds, but the aggregate results and figure patterns should remain comparable.
 
-The complete 300-replication main experiment is computationally intensive and produces large per-observation results and model caches. New results are written under each experiment's `runs/` directory. These directories are excluded by `.gitignore` and should not be committed to GitHub.
-
-The tracked `reference_outputs/` directories contain only compact summary tables and the thesis figures. They are supplied for result comparison and are not required inputs for a new simulation run.
-
-## Reproducibility scope
-
-- Formal parameters, seeds, learners, calibration procedures, evaluation metrics, and plotting code match the thesis experiment release.
-- Packaging changes are limited to replacing machine-specific paths with project-relative paths, aligning stale 5/100-replication convenience defaults with the formal 300-replication run, and adding release documentation and checks.
-- The statistical data-generating mechanisms, estimators, calibration logic, metrics, and plot definitions were not changed.
-- Operating-system, BLAS, parallel-scheduling, or underlying tree-library differences can cause small floating-point differences. Aggregate results and qualitative figure patterns should remain consistent.
-
-## Third-party code and public release
-
-The main experiment vendors a snapshot of upstream `causalCalibration` support code under `vendor/original_figure1/`. The locally obtained upstream `DESCRIPTION` file does not declare a license. Review [THIRD_PARTY_NOTICE.md](THIRD_PARTY_NOTICE.md) and confirm redistribution permission before making this repository public.
-
-See the [GitHub publication guide](docs/GITHUB_UPLOAD_GUIDE.md) for the release workflow.
+The main experiment includes a fixed snapshot of third-party calibration support code. See [THIRD_PARTY_NOTICE.md](THIRD_PARTY_NOTICE.md) for provenance.
